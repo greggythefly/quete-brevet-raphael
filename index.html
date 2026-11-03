@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#2fbf71">
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Quête du Brevet Blanc</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@500;700;800;900&display=swap">
+<style>
+/* Layout : une barre de stats collante, puis un chemin en zigzag par jour (unités colorées), une fiche qui monte du bas pour chaque quête, puis cartes éclair et progression par matière. */
+:root{
+  --bg:#ffffff; --surface:#f2f6f8; --line:#dfe6ea; --ink:#26323a; --muted:#6b7a84;
+  --go:#2fbf71; --go-dark:#21945a; --gold:#ffc23d; --gold-dark:#d99a0b; --flame:#ff7a1a; --sky:#3aa6f0;
+  --maths:#ef5b4c; --maths-d:#c03f32; --fr:#8a62e0; --fr-d:#6a45bd; --hist:#d9844a; --hist-d:#b06330;
+  --geo:#e3a91d; --geo-d:#b9860a; --pc:#17b3b0; --pc-d:#0f8c8a; --svt:#3c8ff0; --svt-d:#2369c4; --tech:#62b84a; --tech-d:#468f33;
+  --boss:#ff4f8b; --boss-d:#cf2f66; --sheet:#ffffff; --shadow:rgba(30,50,60,.18);
+  --f-display:"Baloo 2","Trebuchet MS",system-ui,sans-serif; --f-body:"Nunito",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#131f24; --surface:#1c2b32; --line:#2c3f48; --ink:#eef4f6; --muted:#9fb1ba; --sheet:#1a272d; --shadow:rgba(0,0,0,.5);
+  --go:#3dd47f; --go-dark:#26a35f; color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#131f24; --surface:#1c2b32; --line:#2c3f48; --ink:#eef4f6; --muted:#9fb1ba; --sheet:#1a272d; --shadow:rgba(0,0,0,.5); --go:#3dd47f; --go-dark:#26a35f; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.45;-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.wrap{max-width:620px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 64px}
+h1,h2,h3{font-family:var(--f-display);margin:0;line-height:1.1;text-wrap:balance}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,.node:focus-visible{outline:3px solid var(--sky);outline-offset:3px}
+
+/* barre de stats */
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:2px solid var(--line)}
+.bar .in{max-width:620px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:10px;display:flex;gap:10px;justify-content:space-between;align-items:center}
+.stat{display:flex;align-items:center;gap:6px;font-weight:900;font-size:17px;font-variant-numeric:tabular-nums}
+.stat svg{width:26px;height:26px;flex:none}
+.stat small{font-weight:700;color:var(--muted);font-size:12px}
+
+/* héros */
+.hero{margin-top:18px;background:var(--go);color:#fff;border-radius:20px;padding:18px 18px 16px;box-shadow:0 5px 0 var(--go-dark);position:relative;overflow:hidden}
+.hero .eyebrow{font-weight:800;font-size:12px;letter-spacing:.08em;text-transform:uppercase;opacity:.9}
+.hero h1{font-size:clamp(30px,8vw,42px);margin-top:2px}
+.hero p{margin:6px 0 12px;font-weight:700;max-width:40ch}
+.prog{height:16px;background:rgba(255,255,255,.3);border-radius:99px;overflow:hidden}
+.prog i{display:block;height:100%;width:0;background:#fff;border-radius:99px;transition:width .6s cubic-bezier(.3,1.4,.5,1)}
+.hero .row{display:flex;justify-content:space-between;font-weight:800;font-size:13px;margin-top:6px;font-variant-numeric:tabular-nums}
+.hero .blob{position:absolute;right:-30px;top:-30px;width:130px;height:130px;border-radius:50%;background:rgba(255,255,255,.12)}
+
+.rules{margin-top:14px;display:flex;flex-wrap:wrap;gap:8px}
+.chip{background:var(--surface);border:2px solid var(--line);border-radius:99px;padding:5px 12px;font-size:13px;font-weight:800;color:var(--muted)}
+
+/* unités et chemin */
+.unit{margin-top:30px}
+.ubanner{border-radius:16px;padding:12px 16px;color:#fff;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.ubanner h2{font-size:22px}
+.ubanner .sub{font-size:13px;font-weight:800;opacity:.92}
+.ubanner .count{font-weight:900;font-size:14px;background:rgba(0,0,0,.18);border-radius:99px;padding:4px 10px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.path{display:flex;flex-direction:column;align-items:center;gap:18px;padding:22px 0 6px}
+.slot{transform:translateX(calc(var(--k) * min(20vw,92px)));display:flex;flex-direction:column;align-items:center;position:relative}
+.node{width:76px;height:70px;border-radius:50%;border:0;background:var(--c);box-shadow:0 7px 0 var(--cd);color:#fff;font-family:var(--f-display);font-weight:800;font-size:24px;display:grid;place-items:center;transition:transform .12s,box-shadow .12s;position:relative}
+.node:active{transform:translateY(5px);box-shadow:0 2px 0 var(--cd)}
+.node.done{--c:var(--gold);--cd:var(--gold-dark)}
+.node.done::after{content:"";position:absolute;right:-4px;bottom:-4px;width:26px;height:26px;border-radius:50%;background:var(--go) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M5 12.5l4.2 4.2L19 7' fill='none' stroke='white' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/18px no-repeat;border:3px solid var(--bg)}
+.node.boss{width:92px;height:84px;font-size:15px;line-height:1}
+.ring{position:absolute;inset:-9px;border-radius:50%;border:4px solid var(--c);opacity:.35;pointer-events:none}
+.slot.next .ring{opacity:1;animation:pulse 1.6s ease-in-out infinite}
+@keyframes pulse{50%{transform:scale(1.08);opacity:.5}}
+.tip{position:absolute;bottom:calc(100% + 14px);background:var(--bg);border:2px solid var(--line);color:var(--go-dark);font-weight:900;font-size:13px;padding:6px 12px;border-radius:12px;white-space:nowrap;text-transform:uppercase;letter-spacing:.05em;animation:bob 1.4s ease-in-out infinite}
+:root[data-theme="dark"] .tip{color:var(--go)}
+.tip::after{content:"";position:absolute;left:50%;top:100%;width:12px;height:12px;background:var(--bg);border-right:2px solid var(--line);border-bottom:2px solid var(--line);transform:translate(-50%,-6px) rotate(45deg)}
+@keyframes bob{50%{transform:translateY(-4px)}}
+.cap{margin-top:14px;text-align:center;font-weight:800;font-size:13px;line-height:1.25;max-width:150px}
+.cap span{display:block;color:var(--muted);font-weight:700;font-variant-numeric:tabular-nums}
+
+/* fiche */
+.scrim{position:fixed;inset:0;background:rgba(10,20,25,.45);z-index:20;display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--sheet);width:100%;max-width:620px;border-radius:24px 24px 0 0;padding:20px max(18px,env(safe-area-inset-left,0px)) calc(20px + env(safe-area-inset-bottom,0px)) max(18px,env(safe-area-inset-right,0px));max-height:88vh;overflow:auto;animation:up .25s ease-out}
+@keyframes up{from{transform:translateY(40px);opacity:.4}}
+.sheet .top{display:flex;align-items:center;gap:12px}
+.badge{width:52px;height:48px;border-radius:50%;background:var(--c);box-shadow:0 4px 0 var(--cd);color:#fff;display:grid;place-items:center;font-family:var(--f-display);font-weight:800;font-size:19px;flex:none}
+.sheet h3{font-size:24px}
+.sheet .meta{color:var(--muted);font-weight:800;font-size:14px;font-variant-numeric:tabular-nums}
+.x{margin-left:auto;width:40px;height:40px;border-radius:12px;border:2px solid var(--line);background:var(--surface);font-size:22px;font-weight:900;line-height:1;flex:none}
+.tasks{list-style:none;padding:0;margin:16px 0;display:flex;flex-direction:column;gap:10px}
+.task{display:flex;gap:12px;align-items:flex-start;border:2px solid var(--line);border-radius:14px;padding:12px;font-weight:700;cursor:pointer;transition:background .15s,border-color .15s}
+.task input{appearance:none;width:26px;height:26px;border-radius:8px;border:3px solid var(--line);flex:none;margin:0;display:grid;place-items:center;cursor:pointer;background:var(--bg)}
+.task input:checked{background:var(--c);border-color:var(--c)}
+.task input:checked::after{content:"";width:12px;height:7px;border:solid #fff;border-width:0 0 3px 3px;transform:translateY(-2px) rotate(-45deg)}
+.task:has(input:checked){border-color:var(--c);background:color-mix(in srgb,var(--c) 10%,transparent)}
+.task:has(input:checked) span{color:var(--muted);text-decoration:line-through;text-decoration-thickness:2px}
+.tipbox{background:var(--surface);border-radius:14px;padding:12px 14px;font-weight:700;font-size:14px;color:var(--muted)}
+.tipbox b{color:var(--ink)}
+.big{width:100%;margin-top:16px;border:0;border-radius:16px;padding:15px;font-weight:900;font-size:17px;letter-spacing:.06em;text-transform:uppercase;color:#fff;background:var(--go);box-shadow:0 5px 0 var(--go-dark);transition:transform .1s,box-shadow .1s}
+.big:active{transform:translateY(4px);box-shadow:0 1px 0 var(--go-dark)}
+.big.undo{background:var(--surface);color:var(--muted);box-shadow:0 5px 0 var(--line)}
+
+/* sections du bas */
+.sec{margin-top:42px}
+.sec h2{font-size:26px}
+.sec .lead{color:var(--muted);font-weight:700;margin:4px 0 14px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.flash{perspective:900px;height:150px;border:0;padding:0;background:none}
+.flash .in{position:relative;width:100%;height:100%;transition:transform .45s;transform-style:preserve-3d}
+.flash.on .in{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;backface-visibility:hidden;border-radius:16px;padding:12px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;gap:6px;font-weight:800;border:2px solid var(--line);background:var(--surface);box-shadow:0 4px 0 var(--line)}
+.face small{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--c)}
+.face.back{transform:rotateY(180deg);background:var(--c);color:#fff;border-color:var(--cd);box-shadow:0 4px 0 var(--cd);font-size:14px;line-height:1.3}
+.subjects{display:flex;flex-direction:column;gap:12px}
+.srow{display:grid;grid-template-columns:48px 1fr auto;gap:12px;align-items:center}
+.srow .badge{width:44px;height:40px;font-size:16px}
+.srow b{display:block;font-size:15px}
+.sbar{height:12px;background:var(--surface);border-radius:99px;overflow:hidden;margin-top:4px}
+.sbar i{display:block;height:100%;background:var(--c);border-radius:99px;transition:width .5s}
+.srow .n{font-weight:900;color:var(--muted);font-variant-numeric:tabular-nums;font-size:14px}
+.foot{margin-top:40px;color:var(--muted);font-size:13px;font-weight:700;text-align:center}
+.reset{background:none;border:0;color:var(--muted);text-decoration:underline;font-weight:800;font-size:13px;margin-top:6px}
+
+.io{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.iocard{border:2px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.iocard h3{font-size:19px}
+.iobtns{display:flex;flex-wrap:wrap;gap:8px}
+.btn{border:0;border-radius:12px;padding:10px 14px;font-weight:900;font-size:14px;color:#fff;background:var(--sky);box-shadow:0 4px 0 var(--svt-d);cursor:pointer;display:inline-block}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 var(--svt-d)}
+.btn.alt{background:var(--surface);color:var(--ink);box-shadow:0 4px 0 var(--line)}
+.btn:focus-visible{outline:3px solid var(--sky);outline-offset:3px}
+.code{width:100%;border:2px solid var(--line);border-radius:12px;padding:10px;font:600 12px/1.4 ui-monospace,Menlo,monospace;background:var(--surface);color:var(--ink);resize:vertical;word-break:break-all;margin-bottom:8px}
+.confirm{background:color-mix(in srgb,var(--gold) 18%,transparent);border:2px solid var(--gold);border-radius:12px;padding:12px;font-weight:800;display:flex;flex-direction:column;gap:10px}
+.err{color:var(--maths);font-weight:800;font-size:14px;margin:0}
+.dl{color:var(--sky);font-weight:900}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--gold);color:#3b2a00;font-weight:900;padding:12px 20px;border-radius:16px;box-shadow:0 5px 0 var(--gold-dark);z-index:30;font-size:16px;white-space:nowrap}
+canvas#fx{position:fixed;inset:0;pointer-events:none;z-index:40;width:100%;height:100%}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="bar"><div class="in">
+  <div class="stat" title="Jours parfaits"><svg viewBox="0 0 24 24"><path d="M12 2c1 3.5 5 5.6 5 10.4A5 5 0 0 1 7 13c0-2 1-3.4 2.2-4.4.2 1.6 1 2.6 2 3C11 8.6 11.3 5 12 2z" fill="var(--flame)"/><path d="M12 22a3.6 3.6 0 0 1-3.6-3.6c0-2 1.6-3 2.5-4.6.6 1.4 2.4 2.2 2.4 2.2a3.6 3.6 0 0 1-1.3 6z" fill="var(--gold)"/></svg><span id="stFlame">0</span></div>
+  <div class="stat" title="Points d'expérience"><svg viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z" fill="var(--gold)" stroke="var(--gold-dark)" stroke-width="1.5" stroke-linejoin="round"/></svg><span id="stXp">0</span><small>XP</small></div>
+  <div class="stat" title="Avant le brevet blanc"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="4" fill="var(--sky)"/><rect x="3" y="5" width="18" height="5" rx="2" fill="var(--boss)"/><rect x="7" y="2" width="2.6" height="6" rx="1.3" fill="var(--ink)"/><rect x="14.4" y="2" width="2.6" height="6" rx="1.3" fill="var(--ink)"/></svg><span id="stDays">–</span><small id="stDaysLbl">jours</small></div>
+</div></div>
+
+<main class="wrap">
+  <section class="hero">
+    <div class="blob"></div>
+    <div class="eyebrow">Brevet blanc n°1 · jeudi 12 et vendredi 13 novembre</div>
+    <h1>La quête de Raphaël</h1>
+    <p id="heroMsg">20 quêtes, 7 matières. Une bulle = une séance. Touche-la pour voir ta mission.</p>
+    <div class="prog"><i id="heroBar"></i></div>
+    <div class="row"><span id="heroDone">0 / 20 quêtes</span><span id="heroXp">0 / 0 XP</span></div>
+  </section>
+  <div class="rules">
+    <span class="chip">Jamais le matin</span>
+    <span class="chip">Lundi : libre 18h-19h</span>
+    <span class="chip">Mercredi : libre 16h-17h et 18h-19h</span>
+    <span class="chip">11 novembre férié</span>
+  </div>
+
+  <div id="path"></div>
+
+  <section class="sec">
+    <h2>Défi éclair</h2>
+    <p class="lead">Retourne les cartes. Si tu connais la réponse avant de la voir, c'est gagné.</p>
+    <div class="cards" id="cards"></div>
+  </section>
+
+  <section class="sec">
+    <h2>Tes matières</h2>
+    <p class="lead">Séances terminées par matière.</p>
+    <div class="subjects" id="subjects"></div>
+  </section>
+
+  <section class="sec" id="save">
+    <h2>Sauvegarde</h2>
+    <p class="lead">Ta progression reste dans ce navigateur. Exporte-la pour la garder ou la passer sur un autre appareil.</p>
+    <div class="io">
+      <div class="iocard">
+        <h3>Exporter</h3>
+        <div class="iobtns">
+          <button class="btn" id="exFile">Télécharger le fichier</button>
+          <button class="btn alt" id="exCode">Copier le code</button>
+        </div>
+        <textarea id="codeOut" class="code" rows="3" readonly hidden aria-label="Code de sauvegarde"></textarea>
+      </div>
+      <div class="iocard">
+        <h3>Importer</h3>
+        <div class="iobtns">
+          <label class="btn" for="imFile">Choisir un fichier</label>
+          <input type="file" id="imFile" accept=".json,application/json" hidden>
+          <button class="btn alt" id="imCodeBtn">Coller un code</button>
+        </div>
+        <div id="pasteBox" hidden>
+          <textarea id="codeIn" class="code" rows="3" placeholder="Colle ici le code commençant par RAPH1:" aria-label="Code à importer"></textarea>
+          <button class="btn" id="imCodeGo">Lire le code</button>
+        </div>
+        <div class="confirm" id="confirm" hidden>
+          <p id="confirmMsg"></p>
+          <div class="iobtns"><button class="btn" id="cfYes">Remplacer</button><button class="btn alt" id="cfNo">Annuler</button></div>
+        </div>
+        <p class="err" id="ioErr" hidden></p>
+      </div>
+    </div>
+  </section>
+
+  <div class="foot"><a href="poster.pdf" class="dl">Télécharger le poster à imprimer (PDF)</a><br><button class="reset" id="reset">Tout remettre à zéro</button></div>
+</main>
+
+<div class="scrim" id="scrim" hidden><div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="shTitle"></div></div>
+<div class="toast" id="toast" hidden></div>
+<canvas id="fx"></canvas>
+
+<script>
+const S={
+  maths:{n:"Maths",g:"π"}, fr:{n:"Français",g:"Aa"}, hist:{n:"Histoire",g:"14"}, geo:{n:"Géographie",g:"G"},
+  pc:{n:"Physique-chimie",g:"⚛"}, svt:{n:"SVT",g:"ADN"}, tech:{n:"Technologie",g:"</>"}, boss:{n:"Brevet blanc",g:"BOSS"}
+};
+const DAYS=[
+ {d:"2026-11-03",t:"Mardi 3 nov.",sub:"Fin des cours 17h10",c:"maths",q:[
+  {id:"q1",s:"maths",a:"17:45",b:"18:30",ti:"Calcul numérique",k:["Revoir l'ordre des priorités : parenthèses, puissances, × et ÷, puis + et −","5 calculs de fractions : addition, multiplication, division","Puissances : aⁿ × aᵐ, puissances de 10, écriture scientifique","Refaire 3 exercices du cahier sans regarder la correction"],tip:"Écris chaque étape. Au brevet, une étape juste rapporte des points même si le résultat final est faux."},
+  {id:"q2",s:"fr",a:"18:45",b:"19:15",ti:"Classes grammaticales",k:["Lister les classes : nom, déterminant, adjectif, pronom, verbe, adverbe, préposition, conjonction","Donner la classe de 15 mots d'un paragraphe de ton manuel","Noter les pièges : « que », « leur », « tout », « si »"]}]},
+ {d:"2026-11-04",t:"Mercredi 4 nov.",sub:"Fin des cours 12h35",c:"hist",q:[
+  {id:"q3",s:"hist",a:"14:30",b:"15:30",ti:"14-18 : les affrontements",k:["Frise : Sarajevo, Marne, Verdun, révolutions russes, armistice, traité de Versailles","Définitions : front, guerre de position, guerre de mouvement, guerre totale","Expliquer en 5 lignes la vie dans les tranchées et les armes utilisées"],tip:"Fais la frise sur une grande feuille : tu la réutiliseras le 11 novembre."},
+  {id:"q4",s:"pc",a:"17:00",b:"17:50",ti:"Les atomes",k:["Schéma d'un atome : noyau (protons + neutrons) et électrons","Tableau périodique : lire le numéro atomique Z","Calculer protons, neutrons et électrons pour C, O et Na","Justifier : « l'atome est électriquement neutre, donc… »"]}]},
+ {d:"2026-11-05",t:"Jeudi 5 nov.",sub:"Fin des cours 17h10",c:"geo",q:[
+  {id:"q5",s:"geo",a:"17:45",b:"18:45",ti:"Les aires urbaines",k:["Définitions : aire urbaine, pôle urbain, couronne périurbaine, étalement urbain, migrations pendulaires","Placer les régions françaises et les grandes aires urbaines sur une carte muette","Expliquer l'organisation d'une aire urbaine et ses transports"]}]},
+ {d:"2026-11-06",t:"Vendredi 6 nov.",sub:"Fin des cours 16h",c:"maths",q:[
+  {id:"q6",s:"maths",a:"16:45",b:"17:45",ti:"Thalès et Pythagore",k:["Pythagore : calculer l'hypoténuse, puis un autre côté","Réciproque : prouver qu'un triangle est rectangle","Thalès : configurations triangle et papillon, écrire l'égalité des rapports","Rédiger : on sait que… d'après le théorème… donc…"],tip:"La rédaction compte autant que le calcul. Garde la même phrase type à chaque exercice."},
+  {id:"q7",s:"svt",a:"18:00",b:"18:30",ti:"L'ADN",k:["Relire tout le cours de 3e sur l'ADN","Schéma : cellule → noyau → chromosomes → ADN → gènes","Expliquer à voix haute ce qu'est un gène"]}]},
+ {d:"2026-11-07",t:"Samedi 7 nov.",sub:"Après-midi, avec pauses",c:"fr",q:[
+  {id:"q8",s:"fr",a:"14:30",b:"15:30",ti:"Autobiographie et figures de style",k:["Relire les textes autobiographiques vus depuis septembre","Auteur = narrateur = personnage, pacte autobiographique, le « je » adulte et le « je » enfant","Un exemple pour : comparaison, métaphore, personnification, hyperbole, anaphore, antithèse, gradation"]},
+  {id:"q9",s:"hist",a:"15:45",b:"16:45",ti:"14-18 : civils et révolutions",k:["L'arrière : munitionnettes, économie de guerre, censure","Les liens entre le front et l'arrière, le rôle des civils dans l'effort de guerre","Le génocide des Arméniens","Les révolutions russes de 1917 et les conditions du traité de Versailles"]},
+  {id:"q10",s:"tech",a:"17:00",b:"17:45",ti:"Diagrammes et canicule",k:["Relire la séquence sur la canicule","À quoi sert chaque diagramme : contexte, cas d'utilisation, exigences, définition de blocs, séquence, blocs internes","En compléter deux de mémoire"]}]},
+ {d:"2026-11-08",t:"Dimanche 8 nov.",sub:"Après-midi, avec pauses",c:"pc",q:[
+  {id:"q11",s:"maths",a:"14:30",b:"15:30",ti:"Arithmétique et problème ouvert",k:["Diviseurs, multiples, nombres premiers","Décomposer 360 et 84 en produit de facteurs premiers","Rendre une fraction irréductible","Un problème ouvert : écrire toutes tes pistes, même incomplètes"],tip:"Dans un problème ouvert, les essais comptent. Ne laisse jamais la feuille blanche."},
+  {id:"q12",s:"pc",a:"15:45",b:"16:30",ti:"Les ions",k:["Un ion est un atome qui a gagné ou perdu des électrons","Ion positif : électrons perdus. Ion négatif : électrons gagnés","Composition de Na⁺, Cl⁻ et Fe²⁺ (protons et électrons)"]},
+  {id:"q13",s:"svt",a:"16:45",b:"17:30",ti:"SVT de 4e et de 5e",k:["5e : météo et climat, reproduction des êtres vivants","4e : système nerveux, nutrition végétale","Une fiche par thème, 5 mots-clés maximum"]}]},
+ {d:"2026-11-09",t:"Lundi 9 nov.",sub:"Fin 17h · occupé 18h-19h",c:"tech",q:[
+  {id:"q14",s:"tech",a:"17:20",b:"17:55",ti:"Programmation par blocs",k:["Revoir les blocs : boucle, si… sinon, variable, capteur","Lire un programme et dire ce qu'il fait","Écrire un petit algorithme sur ton cahier"]},
+  {id:"q15",s:"fr",a:"19:15",b:"20:00",ti:"Valeurs des temps",k:["Présent : d'énonciation, de narration, de vérité générale, d'habitude","Imparfait (arrière-plan, description, habitude) et passé simple (premier plan, action ponctuelle)","Dans une autobiographie : présent du narrateur adulte, passé de l'enfant"]}]},
+ {d:"2026-11-10",t:"Mardi 10 nov.",sub:"Fin des cours 17h10",c:"maths",q:[
+  {id:"q16",s:"maths",a:"17:45",b:"19:00",ti:"Sujet de maths chronométré",k:["Un sujet de brevet en 1 heure, au calme, calculatrice prête","Corriger et noter tes erreurs","Refaire seulement les questions ratées"],tip:"Commence par les exercices que tu maîtrises le mieux. Ça met en confiance et ça sécurise des points."}]},
+ {d:"2026-11-11",t:"Mercredi 11 nov.",sub:"Férié · grande révision",c:"boss",q:[
+  {id:"q17",s:"fr",a:"14:30",b:"15:30",ti:"Entraînement de français",k:["Un texte autobiographique : 45 minutes de questions comme au brevet","Repérer 3 figures de style et les temps utilisés","Relire ta fiche sur les classes grammaticales"]},
+  {id:"q18",s:"hist",a:"17:00",b:"17:45",ti:"Histoire-géo express",k:["Réciter la frise 1914-1919 sans regarder","Toutes les définitions d'histoire et de géo","Refaire de mémoire le schéma d'une aire urbaine (couleurs et figurés)"]},
+  {id:"q19",s:"pc",a:"19:15",b:"19:45",ti:"Sciences express",k:["Physique-chimie : atomes et ions","SVT : relire les fiches","Technologie : les 6 diagrammes"],tip:"Ensuite, plus rien. Couche-toi tôt, demain c'est le jour J."}]},
+ {d:"2026-11-12",t:"Jeudi 12 nov.",sub:"Brevet blanc, jour 1",c:"boss",q:[
+  {id:"b1",s:"boss",a:"08:00",b:"17:00",ti:"Épreuves du jour 1",k:["Trousse, calculatrice, règle, équerre, compas","Lire tout le sujet avant d'écrire","Garder 10 minutes pour relire"],boss:1},
+  {id:"q20",s:"fr",a:"18:00",b:"18:30",ti:"Flash du lendemain",k:["Relire les fiches des épreuves de vendredi, pas plus","Préparer le sac et la trousse","Couché tôt"]}]},
+ {d:"2026-11-13",t:"Vendredi 13 nov.",sub:"Brevet blanc, jour 2",c:"boss",q:[
+  {id:"b2",s:"boss",a:"08:00",b:"16:00",ti:"Épreuves du jour 2",k:["Petit-déjeuner solide","Lire tout le sujet avant d'écrire","Garder 10 minutes pour relire"],boss:1}]}
+];
+const CARDS=[
+ ["hist","Histoire","Attentat de Sarajevo","28 juin 1914"],
+ ["hist","Histoire","Bataille de Verdun","De février à décembre 1916"],
+ ["hist","Histoire","Armistice","11 novembre 1918"],
+ ["hist","Histoire","Traité de Versailles","28 juin 1919"],
+ ["hist","Histoire","Munitionnettes","Les ouvrières des usines d'armement"],
+ ["hist","Histoire","Guerre totale","Toute la société et l'économie mobilisées pour la guerre"],
+ ["geo","Géo","Migrations pendulaires","Trajets quotidiens domicile-travail"],
+ ["geo","Géo","Étalement urbain","La ville s'étend sur les espaces ruraux autour"],
+ ["pc","Physique-chimie","Ion Cl⁻","Un atome de chlore qui a gagné 1 électron"],
+ ["pc","Physique-chimie","Nombre de protons","Le numéro atomique Z"],
+ ["maths","Maths","Pythagore","Dans un triangle rectangle : hypoténuse² = somme des carrés des 2 autres côtés"],
+ ["fr","Français","Anaphore","Répétition d'un mot en début de phrase ou de vers"]
+];
+
+const KEY="raphael-brevet-2026";
+let st={done:{},tasks:{}};
+try{const r=localStorage.getItem(KEY);if(r)st=Object.assign(st,JSON.parse(r))}catch(e){}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){}};
+const mins=q=>{const[a,b]=[q.a,q.b].map(x=>x.split(":").map(Number));return(b[0]*60+b[1])-(a[0]*60+a[1])};
+const xpOf=q=>q.boss?100:mins(q);
+const all=DAYS.flatMap(d=>d.q.map(q=>Object.assign(q,{day:d})));
+const fmt=x=>x.replace(":","h").replace("h00","h");
+const $=id=>document.getElementById(id);
+const KS=[0,.7,1,.7,0,-.7,-1,-.7];
+
+function nextQuest(){
+  const now=new Date();
+  return all.find(q=>!st.done[q.id]&&new Date(q.day.d+"T"+q.b+":00")>=now)||all.find(q=>!st.done[q.id]);
+}
+function render(){
+  const nx=nextQuest();let i=0;
+  $("path").innerHTML=DAYS.map(d=>{
+    const n=d.q.filter(q=>st.done[q.id]).length;
+    return `<section class="unit"><div class="ubanner" style="background:var(--${d.c});box-shadow:0 5px 0 var(--${d.c}-d)"><div><h2>${d.t}</h2><div class="sub">${d.sub}</div></div><div class="count">${n} / ${d.q.length}</div></div>
+    <div class="path">${d.q.map(q=>{const k=KS[i++%KS.length];const s=S[q.s];
+      return `<div class="slot ${nx&&nx.id===q.id?'next':''}" style="--k:${k};--c:var(--${q.s});--cd:var(--${q.s}-d)">
+        ${nx&&nx.id===q.id?'<div class="tip">À toi !</div>':''}
+        <span class="ring"></span>
+        <button class="node ${q.boss?'boss':''} ${st.done[q.id]?'done':''}" data-q="${q.id}" aria-label="${s.n} : ${q.ti}">${s.g}</button>
+        <div class="cap">${q.ti}<span>${fmt(q.a)} – ${fmt(q.b)}</span></div></div>`}).join("")}</div></section>`}).join("");
+  const done=all.filter(q=>st.done[q.id]),tot=all.reduce((a,q)=>a+xpOf(q),0),xp=done.reduce((a,q)=>a+xpOf(q),0);
+  $("stXp").textContent=xp;$("heroXp").textContent=`${xp} / ${tot} XP`;
+  $("heroDone").textContent=`${done.length} / ${all.length} quêtes`;
+  $("heroBar").style.width=(100*done.length/all.length)+"%";
+  $("stFlame").textContent=DAYS.filter(d=>d.q.every(q=>st.done[q.id])).length;
+  const left=Math.ceil((new Date("2026-11-12T08:00:00")-new Date())/864e5);
+  $("stDays").textContent=left>0?left:"J";$("stDaysLbl").textContent=left>1?"jours":left===1?"jour":"";
+  $("heroMsg").textContent=done.length===all.length?"Quête accomplie. Bravo Raphaël !":nx?`Prochaine quête : ${S[nx.s].n}, ${nx.day.t.toLowerCase()} à ${fmt(nx.a)}.`:"";
+  const subs=["maths","fr","hist","geo","pc","svt","tech"];
+  $("subjects").innerHTML=subs.map(k=>{const qs=all.filter(q=>q.s===k),d=qs.filter(q=>st.done[q.id]).length;
+    return `<div class="srow" style="--c:var(--${k});--cd:var(--${k}-d)"><div class="badge">${S[k].g}</div><div><b>${S[k].n}</b><div class="sbar"><i style="width:${100*d/qs.length}%"></i></div></div><div class="n">${d}/${qs.length}</div></div>`}).join("");
+}
+function cards(){
+  $("cards").innerHTML=CARDS.map((c,i)=>`<button class="flash" id="fc${i}" style="--c:var(--${c[0]});--cd:var(--${c[0]}-d)" aria-label="Carte : ${c[2]}"><div class="in"><div class="face"><small>${c[1]}</small>${c[2]}</div><div class="face back">${c[3]}</div></div></button>`).join("");
+  $("cards").addEventListener("click",e=>{const b=e.target.closest(".flash");if(b)b.classList.toggle("on")});
+}
+function openQ(id){
+  const q=all.find(x=>x.id===id);if(!q)return;const s=S[q.s];const tk=st.tasks[id]||{};
+  const sh=$("sheet");sh.style.setProperty("--c",`var(--${q.s})`);sh.style.setProperty("--cd",`var(--${q.s}-d)`);
+  sh.innerHTML=`<div class="top"><div class="badge">${s.g}</div><div><h3 id="shTitle">${q.ti}</h3><div class="meta">${s.n} · ${q.day.t} · ${fmt(q.a)} – ${fmt(q.b)}${q.boss?"":" · "+mins(q)+" min"}</div></div><button class="x" id="close" aria-label="Fermer">×</button></div>
+  <ul class="tasks">${q.k.map((t,i)=>`<li><label class="task"><input type="checkbox" id="t-${id}-${i}" data-i="${i}" ${tk[i]?"checked":""}><span>${t}</span></label></li>`).join("")}</ul>
+  ${q.tip?`<div class="tipbox"><b>Astuce · </b>${q.tip}</div>`:""}
+  <button class="big ${st.done[id]?"undo":""}" id="finish">${st.done[id]?"Annuler la validation":`Quête terminée · +${xpOf(q)} XP`}</button>`;
+  $("scrim").hidden=false;
+  if(location.hash!=="#"+id)history.replaceState(null,"","#"+id);
+  sh.querySelectorAll(".task input").forEach(c=>c.onchange=()=>{(st.tasks[id]=st.tasks[id]||{})[c.dataset.i]=c.checked;save();
+    if(!st.done[id]&&q.k.every((_,i)=>st.tasks[id][i]))$("finish").animate?.([{transform:"scale(1)"},{transform:"scale(1.04)"},{transform:"scale(1)"}],{duration:400});});
+  $("close").onclick=closeQ;
+  $("finish").onclick=()=>{if(st.done[id]){delete st.done[id]}else{st.done[id]=Date.now();q.k.forEach((_,i)=>(st.tasks[id]=st.tasks[id]||{})[i]=true);toast(`+${xpOf(q)} XP · ${q.boss?"Boss vaincu !":"Bien joué !"}`);burst();}
+    save();closeQ();render();};
+  $("close").focus();
+}
+function closeQ(){$("scrim").hidden=true;if(location.hash)history.replaceState(null,"",location.pathname+location.search)}
+$("scrim").addEventListener("click",e=>{if(e.target.id==="scrim")closeQ()});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("scrim").hidden)closeQ()});
+$("path").addEventListener("click",e=>{const b=e.target.closest(".node");if(b)openQ(b.dataset.q)});
+window.addEventListener("hashchange",()=>{const h=location.hash.slice(1);h?openQ(h):($("scrim").hidden=true)});
+let resetArm=false;
+$("reset").onclick=()=>{if(!resetArm){resetArm=true;$("reset").textContent="Touche encore pour confirmer";setTimeout(()=>{resetArm=false;$("reset").textContent="Tout remettre à zéro"},3000);return}
+  st={done:{},tasks:{}};save();resetArm=false;$("reset").textContent="Tout remettre à zéro";render();};
+let tt;function toast(m){const t=$("toast");t.textContent=m;t.hidden=false;clearTimeout(tt);tt=setTimeout(()=>t.hidden=true,2200)}
+function burst(){
+  if(matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+  const c=$("fx"),x=c.getContext("2d"),W=c.width=innerWidth,H=c.height=innerHeight;
+  const cols=["#ffc23d","#2fbf71","#3c8ff0","#ef5b4c","#8a62e0","#17b3b0"];
+  const p=Array.from({length:90},()=>({x:W/2,y:H*.6,vx:(Math.random()-.5)*14,vy:-Math.random()*15-6,r:Math.random()*6+4,c:cols[Math.random()*cols.length|0],a:Math.random()*6}));
+  let f=0;(function tick(){x.clearRect(0,0,W,H);p.forEach(o=>{o.vy+=.45;o.x+=o.vx;o.y+=o.vy;o.a+=.2;x.save();x.translate(o.x,o.y);x.rotate(o.a);x.fillStyle=o.c;x.fillRect(-o.r/2,-o.r/4,o.r,o.r/2);x.restore()});
+    if(++f<90)requestAnimationFrame(tick);else x.clearRect(0,0,W,H)})();
+}
+/* ---- import / export ---- */
+const APP="raphael-brevet-2026";
+const payload=()=>({app:APP,version:1,exportedAt:new Date().toISOString(),done:st.done,tasks:st.tasks});
+const toCode=()=>"RAPH1:"+btoa(unescape(encodeURIComponent(JSON.stringify(payload()))));
+function ioErr(m){const e=$("ioErr");e.textContent=m;e.hidden=!m}
+function parseData(txt){
+  txt=(txt||"").trim();let o;
+  try{ if(txt.startsWith("RAPH1:"))txt=decodeURIComponent(escape(atob(txt.slice(6).replace(/\s+/g,"")))); o=JSON.parse(txt);}
+  catch(e){throw new Error("Ce code ou ce fichier est illisible. Vérifie que tu l'as copié en entier.")}
+  if(!o||o.app!==APP||typeof o.done!=="object"||typeof o.tasks!=="object")throw new Error("Ce n'est pas une sauvegarde de la Quête du Brevet Blanc.");
+  const ids=new Set(all.map(q=>q.id)),done={},tasks={};
+  for(const k in o.done)if(ids.has(k))done[k]=Number(o.done[k])||Date.now();
+  for(const k in o.tasks)if(ids.has(k)&&o.tasks[k]&&typeof o.tasks[k]==="object"){tasks[k]={};for(const i in o.tasks[k])tasks[k][i]=!!o.tasks[k][i]}
+  return {done,tasks,exportedAt:o.exportedAt};
+}
+let pending=null;
+function askImport(txt){
+  ioErr("");$("confirm").hidden=true;
+  try{pending=parseData(txt)}catch(e){pending=null;ioErr(e.message);return}
+  const n=Object.keys(pending.done).length,cur=Object.keys(st.done).length;
+  const when=pending.exportedAt?new Date(pending.exportedAt).toLocaleString("fr-FR",{day:"numeric",month:"long",hour:"2-digit",minute:"2-digit"}):"date inconnue";
+  $("confirmMsg").textContent=`Sauvegarde du ${when} : ${n} quête${n>1?"s":""} terminée${n>1?"s":""}. Elle remplacera ta progression actuelle (${cur} quête${cur>1?"s":""}).`;
+  $("confirm").hidden=false;$("cfYes").focus();
+}
+$("cfYes").onclick=()=>{if(!pending)return;st={done:pending.done,tasks:pending.tasks};save();pending=null;$("confirm").hidden=true;$("pasteBox").hidden=true;$("codeIn").value="";render();toast("Progression importée !")};
+$("cfNo").onclick=()=>{pending=null;$("confirm").hidden=true};
+$("exFile").onclick=()=>{
+  const blob=new Blob([JSON.stringify(payload(),null,2)],{type:"application/json"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);
+  a.download=`quete-brevet-raphael-${new Date().toISOString().slice(0,10)}.json`;
+  document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1000);toast("Fichier téléchargé");
+};
+$("exCode").onclick=()=>{
+  const c=toCode(),out=$("codeOut");out.value=c;out.hidden=false;
+  const fb=()=>{out.focus();out.select();toast("Code sélectionné, copie-le")};
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(c).then(()=>toast("Code copié"),fb);else fb();
+};
+$("imFile").onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>askImport(r.result);r.onerror=()=>ioErr("Impossible de lire ce fichier.");r.readAsText(f);e.target.value=""};
+$("imCodeBtn").onclick=()=>{$("pasteBox").hidden=!$("pasteBox").hidden;if(!$("pasteBox").hidden)$("codeIn").focus()};
+$("imCodeGo").onclick=()=>askImport($("codeIn").value);
+
+render();cards();
+if(location.hash.length>1)openQ(location.hash.slice(1));
+</script>
+</body>
+</html>
